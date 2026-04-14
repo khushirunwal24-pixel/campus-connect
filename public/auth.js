@@ -16,4 +16,5 @@ if (signupBtn) {
             alert("Error: " + error.message);
         }
     });
+
 }
