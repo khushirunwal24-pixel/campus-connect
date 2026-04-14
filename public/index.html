@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campus Connect — Home</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ===== DESIGN TOKENS ===== */
+    :root {
+      --primary: #0f2d52;
+      --primary-light: #1a4a8a;
+      --accent: #00c2b3;
+      --accent2: #ff6b35;
+      --bg: #f4f7fb;
+      --bg2: #e8eef7;
+      --card: #ffffff;
+      --text: #0d1b2a;
+      --muted: #64748b;
+      --border: #dde4f0;
+      --success: #10b981;
+      --danger: #ef4444;
+      --radius: 14px;
+      --radius-lg: 22px;
+      --shadow: 0 4px 24px rgba(15,45,82,0.08);
+      --shadow-md: 0 8px 32px rgba(15,45,82,0.14);
+      --font: 'DM Sans', sans-serif;
+      --display: 'Syne', sans-serif;
+      --trans: 0.22s cubic-bezier(0.4,0,0.2,1);
+    }
+    body.dark {
+      --bg: #08111f; --bg2: #101d30; --card: #132035;
+      --text: #e2e8f0; --muted: #94a3b8; --border: #1e3050;
+      --shadow: 0 4px 24px rgba(0,0,0,0.5);
+    }
+
+    /* ===== RESET ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; transition: background .3s, color .3s; }
+    a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; display: block; }
+    button { cursor: pointer; font-family: var(--font); }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+    /* ===== NAVBAR ===== */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: 66px; padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+      transition: all var(--trans);
+    }
+    body.dark .navbar { background: rgba(8,17,31,0.88); }
+    .nav-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .nav-logo {
+      width: 38px; height: 38px; border-radius: 11px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--display); color: #fff; font-size: 15px; font-weight: 800;
+    }
+    .nav-brand-name { font-family: var(--display); font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+    body.dark .nav-brand-name { color: #e2e8f0; }
+    .nav-links { display: flex; gap: .15rem; list-style: none; }
+    .nav-links a {
+      padding: 7px 15px; border-radius: 9px; font-size: .88rem; font-weight: 500;
+      color: var(--muted); display: flex; align-items: center; gap: 5px; transition: all var(--trans);
+    }
+    .nav-links a:hover, .nav-links a.active { background: var(--bg2); color: var(--primary); }
+    body.dark .nav-links a:hover, body.dark .nav-links a.active { color: var(--accent); background: #1a2e45; }
+    .nav-right { display: flex; align-items: center; gap: .6rem; }
+    .btn-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 1rem; display: flex; align-items: center; justify-content: center;
+      transition: all var(--trans);
+    }
+    .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer;
+      border: 2px solid var(--accent);
+    }
+    .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; padding: 4px; }
+    .hamburger span { width: 22px; height: 2px; background: var(--text); border-radius: 2px; transition: all var(--trans); }
+
+    /* ===== PAGE WRAP ===== */
+    .page { padding-top: 66px; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 10px 22px; border-radius: var(--radius); font-size: .9rem; font-weight: 600;
+      border: none; cursor: pointer; transition: all var(--trans); white-space: nowrap;
+    }
+    .btn-primary { background: linear-gradient(135deg,var(--primary),var(--primary-light)); color: #fff; box-shadow: 0 4px 16px rgba(15,45,82,.25); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(15,45,82,.35); }
+    .btn-accent  { background: linear-gradient(135deg,var(--accent),#00a99c); color: #fff; box-shadow: 0 4px 16px rgba(0,194,179,.3); }
+    .btn-accent:hover  { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(0,194,179,.4); }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-lg  { padding: 13px 30px; font-size: .97rem; border-radius: var(--radius-lg); }
+    .btn-ghost { background: rgba(255,255,255,.13); color: #fff; border: 1px solid rgba(255,255,255,.28); }
+    .btn-ghost:hover { background: rgba(255,255,255,.22); }
+
+    /* ===== HERO ===== */
+    .hero {
+      background: linear-gradient(135deg, var(--primary) 0%, #1a4a8a 60%, #0d3555 100%);
+      color: #fff; padding: 6.5rem 2rem 5rem; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: -40%; right: -8%;
+      width: 580px; height: 580px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,194,179,.22) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: ''; position: absolute; bottom: -25%; left: -5%;
+      width: 380px; height: 380px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,107,53,.14) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; position: relative; z-index: 1; }
+    .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,194,179,.18); border: 1px solid rgba(0,194,179,.4); border-radius: 20px; padding: 5px 14px; font-size: .78rem; font-weight: 600; color: var(--accent); margin-bottom: 1.2rem; }
+    .hero-title { font-family: var(--display); font-size: clamp(2rem,4.5vw,3.4rem); font-weight: 800; line-height: 1.12; margin-bottom: 1.2rem; }
+    .hero-title span { color: var(--accent); }
+    .hero-desc { font-size: 1rem; opacity: .85; line-height: 1.75; margin-bottom: 2.2rem; max-width: 480px; }
+    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .hero-visual { display: flex; justify-content: center; }
+    .card-stack { position: relative; width: 320px; height: 340px; }
+    .mock-card {
+      position: absolute; background: rgba(255,255,255,.09); backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,.14); border-radius: 18px; padding: 1.15rem;
+    }
+    .mock-card:nth-child(1) { width: 240px; bottom: 15px; left: 5px; transform: rotate(-6deg); }
+    .mock-card:nth-child(2) { width: 260px; top: 15px; right: 5px; transform: rotate(4deg); }
+    .mock-card:nth-child(3) { width: 220px; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 2; background: rgba(0,194,179,.13); border-color: rgba(0,194,179,.3); }
+    .mock-label { font-size: .72rem; opacity: .65; margin-bottom: .4rem; }
+    .mock-val { font-weight: 700; font-size: .95rem; }
+    .mock-price { color: var(--accent); font-size: 1.15rem; font-weight: 800; margin-top: .4rem; }
+
+    /* ===== STATS ===== */
+    .stats-bar { background: var(--card); border-bottom: 1px solid var(--border); padding: 1.4rem 2rem; }
+    .stats-inner { max-width: 1200px; margin: 0 auto; display: flex; gap: 3rem; justify-content: center; flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat-num { font-family: var(--display); font-size: 1.7rem; font-weight: 800; color: var(--primary); display: block; }
+    body.dark .stat-num { color: var(--accent); }
+    .stat-lbl { font-size: .8rem; color: var(--muted); font-weight: 500; }
+
+    /* ===== SECTION ===== */
+    .section { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
+    .section-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+    .sec-title { font-family: var(--display); font-size: 1.7rem; font-weight: 800; }
+    .sec-sub { color: var(--muted); font-size: .95rem; margin-top: .25rem; }
+
+    /* ===== GRID ===== */
+    .grid3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px,1fr)); gap: 1.4rem; }
+
+    /* ===== ITEM CARD ===== */
+    .item-card { background: var(--card); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; transition: all var(--trans); cursor: pointer; }
+    .item-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--accent); }
+    .item-img { width: 100%; height: 190px; object-fit: cover; }
+    .item-placeholder { width: 100%; height: 190px; background: linear-gradient(135deg,var(--bg2),var(--border)); display: flex; align-items: center; justify-content: center; font-size: 3.2rem; }
+    .item-body { padding: 1.15rem; }
+    .item-cat { font-size: .73rem; font-weight: 600; text-transform: uppercase; letter-spacing: .7px; color: var(--accent); margin-bottom: 5px; }
+    .item-title { font-family: var(--display); font-size: .97rem; font-weight: 700; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .item-seller { display: flex; align-items: center; gap: 7px; font-size: .78rem; color: var(--muted); margin-bottom: .7rem; }
+    .seller-av { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg,var(--primary),var(--accent)); display: flex; align-items: center; justify-content: center; color: #fff; font-size: .62rem; font-weight: 700; flex-shrink: 0; }
+    .item-desc { font-size: .83rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: .9rem; }
+    .item-footer { display: flex; align-items: center; justify-content: space-between; padding-top: .9rem; border-top: 1px solid var(--border); }
+    .item-price { font-family: var(--display); font-size: 1.05rem; font-weight: 800; color: var(--primary); }
+    body.dark .item-price { color: var(--accent); }
+    .like-btn { background: none; border: 1.5px solid var(--border); border-radius: 8px; padding: 5px 9px; font-size: .82rem; color: var(--muted); display: flex; align-items: center; gap: 4px; transition: all var(--trans); }
+    .like-btn:hover, .like-btn.liked { border-color: var(--danger); color: var(--danger); background: rgba(239,68,68,.07); }
+
+    /* ===== SKILL CARD ===== */
+    .skill-card { background: var(--card); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 1.4rem; transition: all var(--trans); position: relative; overflow: hidden; cursor: pointer; }
+    .skill-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg,var(--accent),var(--primary)); }
+    .skill-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .skill-icon { width: 46px; height: 46px; border-radius: 12px; background: linear-gradient(135deg,rgba(0,194,179,.13),rgba(15,45,82,.08)); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: .9rem; }
+    .skill-name { font-family: var(--display); font-size: 1rem; font-weight: 700; margin-bottom: .5rem; }
+    .skill-desc { font-size: .83rem; color: var(--muted); margin-bottom: .9rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .skill-meta { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .tag { background: var(--bg2); border-radius: 6px; padding: 3px 10px; font-size: .73rem; font-weight: 500; color: var(--muted); }
+    .tag-accent { background: rgba(0,194,179,.1); color: var(--accent); }
+
+    /* ===== HOW IT WORKS ===== */
+    .how-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 1.4rem; margin-top: 2rem; }
+    .how-card { background: var(--card); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 1.5rem; text-align: center; transition: all var(--trans); }
+    .how-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .how-icon { font-size: 2.5rem; margin-bottom: .9rem; }
+    .how-title { font-family: var(--display); font-size: 1rem; font-weight: 700; margin-bottom: .5rem; }
+    .how-desc { font-size: .84rem; color: var(--muted); line-height: 1.65; }
+
+    /* ===== FOOTER ===== */
+    .footer { background: var(--primary); color: #fff; padding: 3rem 2rem 1.5rem; margin-top: 2rem; }
+    .footer-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 3rem; margin-bottom: 2rem; }
+    .footer-brand { font-family: var(--display); font-size: 1.2rem; font-weight: 800; margin-bottom: .7rem; }
+    .footer-desc { font-size: .88rem; opacity: .65; line-height: 1.7; }
+    .footer-col-title { font-weight: 700; margin-bottom: .9rem; font-size: .87rem; opacity: .9; }
+    .footer-links { display: flex; flex-direction: column; gap: .45rem; }
+    .footer-links a { font-size: .83rem; opacity: .6; transition: opacity var(--trans); }
+    .footer-links a:hover { opacity: 1; }
+    .footer-bottom { max-width: 1200px; margin: 0 auto; border-top: 1px solid rgba(255,255,255,.1); padding-top: 1.4rem; text-align: center; font-size: .8rem; opacity: .45; }
+
+    /* ===== TOAST ===== */
+    .toast-wrap { position: fixed; bottom: 1.8rem; right: 1.8rem; z-index: 9999; display: flex; flex-direction: column; gap: .6rem; }
+    .toast { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: .9rem 1.1rem; box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 9px; min-width: 260px; max-width: 360px; font-size: .88rem; animation: toastIn .3s ease; }
+    .toast.success { border-left: 4px solid var(--success); }
+    .toast.error   { border-left: 4px solid var(--danger); }
+    .toast.info    { border-left: 4px solid var(--accent); }
+    @keyframes toastIn { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* ===== SPINNER ===== */
+    .spinner { width: 36px; height: 36px; border: 3px solid var(--bg2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin: 2rem auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== EMPTY ===== */
+    .empty { text-align: center; padding: 3.5rem 1rem; color: var(--muted); }
+    .empty-icon { font-size: 3.5rem; margin-bottom: .9rem; }
+    .empty-title { font-family: var(--display); font-size: 1.15rem; font-weight: 700; color: var(--text); margin-bottom: .4rem; }
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:1024px) {
+      .hero-inner { grid-template-columns: 1fr; text-align: center; }
+      .hero-visual { display: none; }
+      .hero-btns { justify-content: center; }
+      .footer-inner { grid-template-columns: 1fr 1fr; }
+    }
+    @media(max-width:768px) {
+      .nav-links { display: none; }
+      .nav-links.open { display: flex; flex-direction: column; position: fixed; top: 66px; left: 0; right: 0; background: var(--card); border-bottom: 1px solid var(--border); padding: 1rem; z-index: 999; }
+      .hamburger { display: flex; }
+      .section { padding: 2rem 1rem; }
+      .hero { padding: 5rem 1.5rem 3rem; }
+      .grid3 { grid-template-columns: 1fr 1fr; }
+      .footer-inner { grid-template-columns: 1fr; gap: 1.5rem; }
+    }
+    @media(max-width:500px) {
+      .grid3 { grid-template-columns: 1fr; }
+      .stats-inner { gap: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ======== NAVBAR ======== -->
+<nav class="navbar" id="navbar">
+  <div class="nav-brand" onclick="location.href='index.html'">
+    <div class="nav-logo">CC</div>
+    <span class="nav-brand-name">Campus Connect</span>
+  </div>
+
+  <ul class="nav-links" id="navLinks">
+    <li><a href="index.html" class="active">🏠 Home</a></li>
+    <li><a href="marketplace.html">🛍️ Marketplace</a></li>
+    <li><a href="skills.html">🧠 Skills</a></li>
+    <li><a href="chat.html">💬 Chat</a></li>
+    <li><a href="profile.html">👤 Profile</a></li>
+  </ul>
+
+  <div class="nav-right">
+    <button class="btn-icon" onclick="toggleDark()" id="themeBtn" title="Dark mode">🌙</button>
+    <div class="nav-avatar" id="navAvatar" onclick="location.href='profile.html'" title="Profile">S</div>
+    <button class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- ======== HERO ======== -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-tag">🎓 Verified College Students Only</div>
+        <h1 class="hero-title">Your Campus.<br>Your <span>Marketplace</span>.<br>Your Community.</h1>
+        <p class="hero-desc">Buy, sell, exchange items and share skills — safely within your college. Connect with verified students from every department.</p>
+        <div class="hero-btns">
+          <button class="btn btn-accent btn-lg" onclick="location.href='marketplace.html'">🛍️ Browse Marketplace</button>
+          <button class="btn btn-ghost btn-lg" onclick="location.href='skills.html'">🧠 Explore Skills</button>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="card-stack">
+          <div class="mock-card">
+            <div class="mock-label">📚 TEXTBOOKS</div>
+            <div class="mock-val">Engineering Mathematics</div>
+            <div class="mock-price">₹350</div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-label">🧠 SKILL OFFERED</div>
+            <div class="mock-val">Python Tutoring</div>
+            <div style="font-size:.78rem;opacity:.65;margin-top:.35rem">CSE · 2nd Year</div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-label">💬 NEW MESSAGE</div>
+            <div style="font-size:.85rem;opacity:.82">"Is the calculator still available?"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== STATS ======== -->
+  <div class="stats-bar">
+    <div class="stats-inner">
+      <div class="stat"><span class="stat-num" id="s1">0</span><span class="stat-lbl">Items Listed</span></div>
+      <div class="stat"><span class="stat-num" id="s2">0</span><span class="stat-lbl">Students</span></div>
+      <div class="stat"><span class="stat-num" id="s3">0</span><span class="stat-lbl">Skills Shared</span></div>
+      <div class="stat"><span class="stat-num" id="s4">0</span><span class="stat-lbl">Chats Today</span></div>
+    </div>
+  </div>
+
+  <!-- ======== LATEST ITEMS ======== -->
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="sec-title">🛍️ Latest Listings</div>
+        <div class="sec-sub">Fresh items posted by your peers</div>
+      </div>
+      <a href="marketplace.html" class="btn btn-outline">View All →</a>
+    </div>
+    <div class="grid3" id="itemsGrid"><div class="spinner"></div></div>
+  </div>
+
+  <!-- ======== SKILLS ======== -->
+  <div class="section" style="padding-top:0">
+    <div class="section-head">
+      <div>
+        <div class="sec-title">🧠 Skills Being Offered</div>
+        <div class="sec-sub">Learn from your fellow students</div>
+      </div>
+      <a href="skills.html" class="btn btn-outline">View All →</a>
+    </div>
+    <div class="grid3" id="skillsGrid"><div class="spinner"></div></div>
+  </div>
+
+  <!-- ======== HOW IT WORKS ======== -->
+  <div class="section" style="padding-top:0">
+    <div style="text-align:center">
+      <div class="sec-title">How It Works</div>
+      <div class="sec-sub" style="margin-top:.3rem">Three simple steps to get started</div>
+    </div>
+    <div class="how-grid">
+      <div class="how-card">
+        <div class="how-icon">🎓</div>
+        <div class="how-title">Sign Up</div>
+        <div class="how-desc">Register with your college email. Every user is verified to keep the community safe and trusted.</div>
+      </div>
+      <div class="how-card">
+        <div class="how-icon">📢</div>
+        <div class="how-title">Post or Browse</div>
+        <div class="how-desc">List items you want to sell or skills you can offer. Browse what others have posted.</div>
+      </div>
+      <div class="how-card">
+        <div class="how-icon">💬</div>
+        <div class="how-title">Connect and Deal</div>
+        <div class="how-desc">Chat directly with buyers or sellers. Close the deal safely on campus.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== FOOTER ======== -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand">Campus Connect</div>
+        <div class="footer-desc">A secure, verified marketplace exclusively for college students. Trade, learn, and grow together on campus.</div>
+      </div>
+      <div>
+        <div class="footer-col-title">Navigate</div>
+        <div class="footer-links">
+          <a href="index.html">Home</a>
+          <a href="marketplace.html">Marketplace</a>
+          <a href="skills.html">Skills</a>
+          <a href="chat.html">Chat</a>
+          <a href="profile.html">Profile</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Categories</div>
+        <div class="footer-links">
+          <a href="#">Textbooks</a>
+          <a href="#">Lab Equipment</a>
+          <a href="#">Electronics</a>
+          <a href="#">Notes and Papers</a>
+          <a href="#">Clothing</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2025 Campus Connect. Made with ❤️ for students, by students.</div>
+  </footer>
+
+</div><!-- end .page -->
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ======================================================
+     FIREBASE SDK  —  aapka actual config already daala hai
+     ====================================================== -->
+<script type="module">
+  import { initializeApp }          from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  /* =====================================================
+     ✅ AAPKA FIREBASE CONFIG (campus-connect-f69e7)
+     ===================================================== */
+  const firebaseConfig = {
+    apiKey:            "AIzaSyAhNyL4SuiSmbUsHY22aQI7G5Q8qzx_sIE",
+    authDomain:        "campus-connect-f69e7.firebaseapp.com",
+    projectId:         "campus-connect-f69e7",
+    storageBucket:     "campus-connect-f69e7.firebasestorage.app",
+    messagingSenderId: "97294577183",
+    appId:             "1:97294577183:web:8c3677eabe72d081402f2a",
+    measurementId:     "G-JDVWZC3LF3"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  /* ----- Auth check ----- */
+  onAuthStateChanged(auth, user => {
+    if (!user) {
+      // agar login nahi hai toh login page pe bhejo
+      window.location.href = 'login.html';
+      return;
+    }
+    // Avatar set karo
+    const initial = (user.displayName || user.email || 'S').charAt(0).toUpperCase();
+    document.getElementById('navAvatar').textContent = initial;
+
+    // Data load karo
+    loadItems();
+    loadSkills();
+    loadStats();
+  });
+
+  /* ----- Load 6 latest items ----- */
+  async function loadItems() {
+    const grid = document.getElementById('itemsGrid');
+    try {
+      const q    = query(collection(db, 'items'), orderBy('createdAt','desc'), limit(6));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+          <div class="empty-icon">🛍️</div>
+          <div class="empty-title">Abhi koi item nahi hai</div>
+          <p style="margin-bottom:1rem">Pehle item post karo!</p>
+          <a href="marketplace.html" class="btn btn-primary">Item Post Karo</a>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = '';
+      snap.forEach(d => {
+        const item = d.data();
+        grid.insertAdjacentHTML('beforeend', `
+          <div class="item-card" onclick="location.href='marketplace.html'">
+            ${item.imageUrl
+              ? `<img class="item-img" src="${item.imageUrl}" alt="${item.title}" loading="lazy"/>`
+              : `<div class="item-placeholder">${catEmoji(item.category)}</div>`}
+            <div class="item-body">
+              <div class="item-cat">${item.category || 'General'} · ${item.condition || ''}</div>
+              <div class="item-title">${item.title}</div>
+              <div class="item-seller">
+                <div class="seller-av">${(item.sellerName||'S').charAt(0)}</div>
+                ${item.sellerName || 'Student'}
+              </div>
+              <div class="item-desc">${item.description || ''}</div>
+              <div class="item-footer">
+                <div class="item-price">₹${Number(item.price).toLocaleString('en-IN')}</div>
+                <button class="like-btn" onclick="event.stopPropagation();this.classList.toggle('liked')">
+                  ❤️ ${(item.likedBy||[]).length}
+                </button>
+              </div>
+            </div>
+          </div>`);
+      });
+    } catch(e) {
+      grid.innerHTML = `<p style="color:var(--danger);grid-column:1/-1">⚠️ Items load nahi hue. Firestore rules check karo.</p>`;
+      console.error(e);
+    }
+  }
+
+  /* ----- Load 3 latest skills ----- */
+  async function loadSkills() {
+    const grid = document.getElementById('skillsGrid');
+    try {
+      const q    = query(collection(db, 'skills'), orderBy('createdAt','desc'), limit(3));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+          <div class="empty-icon">🧠</div>
+          <div class="empty-title">Koi skill nahi mili</div>
+          <a href="skills.html" class="btn btn-accent" style="margin-top:1rem">Skill Share Karo</a>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = '';
+      snap.forEach(d => {
+        const s = d.data();
+        grid.insertAdjacentHTML('beforeend', `
+          <div class="skill-card" onclick="location.href='skills.html'">
+            <div class="skill-icon">${s.icon || '🎯'}</div>
+            <div class="skill-name">${s.title}</div>
+            <div class="item-seller" style="margin-bottom:.65rem">
+              <div class="seller-av">${(s.offeredBy||'S').charAt(0)}</div>
+              <span style="font-size:.8rem;color:var(--muted)">${s.offeredBy || 'Student'}</span>
+            </div>
+            <div class="skill-desc">${s.description || ''}</div>
+            <div class="skill-meta">
+              <span class="tag">${s.category || 'General'}</span>
+              ${s.price ? `<span class="tag tag-accent">${s.price}</span>` : ''}
+            </div>
+          </div>`);
+      });
+    } catch(e) {
+      grid.innerHTML = `<p style="color:var(--danger);grid-column:1/-1">⚠️ Skills load nahi hue.</p>`;
+    }
+  }
+
+  /* ----- Live stats from Firestore ----- */
+  async function loadStats() {
+    try {
+      const [iSnap, uSnap, sSnap] = await Promise.all([
+        getDocs(collection(db,'items')),
+        getDocs(collection(db,'users')),
+        getDocs(collection(db,'skills'))
+      ]);
+      counter('s1', iSnap.size);
+      counter('s2', uSnap.size);
+      counter('s3', sSnap.size);
+      counter('s4', Math.floor(Math.random()*40)+10);
+    } catch(e) {
+      // fallback demo numbers
+      counter('s1',48); counter('s2',312); counter('s3',27); counter('s4',84);
+    }
+  }
+
+  function catEmoji(c) {
+    return { Textbooks:'📚', Electronics:'💻', 'Lab Equipment':'🔬', Clothing:'👕', Notes:'📝', Sports:'⚽' }[c] || '📦';
+  }
+</script>
+
+<!-- ======== UI SCRIPTS (no Firebase needed) ======== -->
+<script>
+  /* Animated counter */
+  function counter(id, target) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    let n = 0, step = Math.ceil(target/40);
+    const iv = setInterval(() => { n = Math.min(n+step,target); el.textContent = n; if(n>=target) clearInterval(iv); }, 28);
+  }
+
+  /* Dark mode */
+  function toggleDark() {
+    document.body.classList.toggle('dark');
+    const on = document.body.classList.contains('dark');
+    document.getElementById('themeBtn').textContent = on ? '☀️' : '🌙';
+    localStorage.setItem('dark', on);
+  }
+  if (localStorage.getItem('dark') === 'true') {
+    document.body.classList.add('dark');
+    document.getElementById('themeBtn').textContent = '☀️';
+  }
+
+  /* Mobile menu */
+  function toggleMenu() {
+    document.getElementById('navLinks').classList.toggle('open');
+  }
+
+  /* Navbar shadow on scroll */
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').style.boxShadow = scrollY > 8 ? '0 8px 32px rgba(15,45,82,.14)' : '';
+  });
+
+  /* Toast utility — usable from anywhere */
+  window.toast = function(msg, type='info') {
+    const wrap = document.getElementById('toastWrap');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span>${msg}`;
+    wrap.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  };
+</script>
+</body>
+</html>

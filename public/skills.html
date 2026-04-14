@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skills Exchange — Campus Connect</title>
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-brand" onclick="window.location.href='../index.html'" style="cursor:pointer">
+      <div class="nav-logo">CC</div>
+      <span class="nav-brand-name">Campus Connect</span>
+    </div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="../index.html">🏠 Home</a></li>
+      <li><a href="marketplace.html">🛍️ Marketplace</a></li>
+      <li><a href="skills.html" class="active">🧠 Skills</a></li>
+      <li><a href="chat.html">💬 Chat</a></li>
+      <li><a href="profile.html">👤 Profile</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleDarkMode()">🌙</button>
+      <button class="btn btn-accent btn-sm" onclick="openSkillModal()">+ Offer Skill</button>
+      <div class="nav-avatar" id="navAvatar" onclick="window.location.href='profile.html'">?</div>
+      <button class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('mobile-open')">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="page-content">
+    <div class="section">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+        <div>
+          <h1 class="section-title">🧠 Skills Exchange</h1>
+          <p class="section-subtitle">Learn from peers. Share what you know.</p>
+        </div>
+        <button class="btn btn-accent" onclick="openSkillModal()">+ Offer a Skill</button>
+      </div>
+
+      <!-- Search -->
+      <div class="search-bar" style="max-width:100%;margin-bottom:1.5rem">
+        <input type="text" id="skillSearch" placeholder="Search skills (e.g., Python, Guitar, Design...)" oninput="filterSkills()" />
+        <button onclick="filterSkills()">🔍</button>
+      </div>
+
+      <!-- Category filter -->
+      <div class="filter-bar" style="margin-bottom:1.5rem">
+        <button class="filter-chip active" onclick="setSkillFilter('All')">All</button>
+        <button class="filter-chip" onclick="setSkillFilter('Coding')">💻 Coding</button>
+        <button class="filter-chip" onclick="setSkillFilter('Tutoring')">📚 Tutoring</button>
+        <button class="filter-chip" onclick="setSkillFilter('Design')">🎨 Design</button>
+        <button class="filter-chip" onclick="setSkillFilter('Music')">🎵 Music</button>
+        <button class="filter-chip" onclick="setSkillFilter('Language')">🌍 Language</button>
+        <button class="filter-chip" onclick="setSkillFilter('Sports')">🏃 Sports</button>
+        <button class="filter-chip" onclick="setSkillFilter('Other')">⭐ Other</button>
+      </div>
+
+      <!-- Skills Grid -->
+      <div class="grid-3" id="skillsGrid">
+        <div style="grid-column:1/-1;text-align:center;padding:3rem">
+          <div class="spinner"></div>
+          <p style="color:var(--text-muted);margin-top:1rem">Loading skills...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OFFER SKILL MODAL -->
+  <div class="modal-overlay" id="skillModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">🧠 Offer a Skill</div>
+        <button class="modal-close" onclick="closeSkillModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Skill Title *</label>
+          <input type="text" id="skillTitle" class="form-control" placeholder="e.g., Python Programming for Beginners" />
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div class="form-group">
+            <label class="form-label">Category *</label>
+            <select id="skillCategory" class="form-control">
+              <option value="">Select...</option>
+              <option>Coding</option>
+              <option>Tutoring</option>
+              <option>Design</option>
+              <option>Music</option>
+              <option>Language</option>
+              <option>Sports</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Icon (emoji)</label>
+            <input type="text" id="skillIcon" class="form-control" placeholder="💻" maxlength="4" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description *</label>
+          <textarea id="skillDesc" class="form-control" rows="3" placeholder="Describe what you'll teach, your experience, availability, etc."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Price / Terms</label>
+          <input type="text" id="skillPrice" class="form-control" placeholder="e.g., Free, ₹200/hour, Skill exchange" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contact (WhatsApp or Email)</label>
+          <input type="text" id="skillContact" class="form-control" placeholder="+91 98765 43210 or yourname@college.edu" />
+        </div>
+        <button class="btn btn-accent" style="width:100%" onclick="postSkill()" id="postSkillBtn">
+          Share Skill
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let allSkills = [];
+    let activeFilter = 'All';
+
+    const isDemo = firebaseConfig.apiKey === 'YOUR_API_KEY';
+    if (isDemo) {
+      currentUser = { uid: 'demo', displayName: 'Student', email: 'student@college.edu' };
+      document.getElementById('navAvatar').textContent = 'S';
+      loadDemoSkills();
+    } else {
+      onAuthStateChanged(auth, user => {
+        if (!user) { window.location.href = 'auth.html'; return; }
+        currentUser = user;
+        document.getElementById('navAvatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+        loadSkills();
+      });
+    }
+
+    function loadDemoSkills() {
+      allSkills = [
+        { id:'s1', title:'Python Programming for Beginners', category:'Coding', icon:'💻', description:'I can teach Python from scratch – variables, loops, functions, OOP, and mini projects. 2 hours/week available.', offeredBy:'Rahul K.', offererUid:'u3', price:'Free / Exchange' },
+        { id:'s2', title:'Engineering Drawing and CAD Basics', category:'Design', icon:'📐', description:'AutoCAD and manual drawing help. Specialise in 1st year ED course. Flexible timings available.', offeredBy:'Mehul D.', offererUid:'u7', price:'₹150/hr' },
+        { id:'s3', title:'Guitar Lessons (Beginner to Intermediate)', category:'Music', icon:'🎸', description:'Acoustic guitar lessons. Can teach chords, strumming patterns and basic songs. Weekends only.', offeredBy:'Aisha T.', offererUid:'u8', price:'Skill Exchange' },
+        { id:'s4', title:'GATE Mathematics Tutoring', category:'Tutoring', icon:'📚', description:'Linear algebra, calculus, probability. 3 years GATE prep experience. Batch and individual sessions.', offeredBy:'Priya M.', offererUid:'u2', price:'₹200/hr' },
+        { id:'s5', title:'Figma and UI/UX Design', category:'Design', icon:'🎨', description:'Learn product design from wireframes to prototypes. Will teach Figma, design principles and portfolio building.', offeredBy:'Neha S.', offererUid:'u9', price:'Free' },
+        { id:'s6', title:'Spanish for Beginners', category:'Language', icon:'🌍', description:'Conversational Spanish. A1 to B1 level. Native-level fluency. Online sessions available.', offeredBy:'Carlos M.', offererUid:'u10', price:'Skill Exchange' },
+      ];
+      renderSkills();
+    }
+
+    async function loadSkills() {
+      try {
+        const q = query(collection(db, 'skills'), orderBy('createdAt', 'desc'));
+        const snap = await getDocs(q);
+        allSkills = [];
+        snap.forEach(d => allSkills.push({ id: d.id, ...d.data() }));
+        renderSkills();
+      } catch (e) {
+        document.getElementById('skillsGrid').innerHTML = `<p style="color:var(--danger);grid-column:1/-1">⚠️ Error loading skills. Check Firebase setup.</p>`;
+      }
+    }
+
+    function renderSkills() {
+      const grid = document.getElementById('skillsGrid');
+      const search = document.getElementById('skillSearch').value.toLowerCase();
+      const filtered = allSkills.filter(d =>
+        (activeFilter === 'All' || d.category === activeFilter) &&
+        (d.title.toLowerCase().includes(search) || (d.description || '').toLowerCase().includes(search))
+      );
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-icon">🧠</div>
+          <div class="empty-title">No skills found</div>
+          <p>Be the first to share a skill with your campus!</p>
+          <button class="btn btn-accent" style="margin-top:1rem" onclick="openSkillModal()">Offer a Skill</button>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(d => `
+        <div class="skill-card">
+          <div class="skill-icon">${d.icon || '🎯'}</div>
+          <div class="skill-name">${d.title}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
+            <div class="seller-avatar" style="width:28px;height:28px;font-size:.75rem">${(d.offeredBy || 'S').charAt(0)}</div>
+            <span style="font-size:.82rem;color:var(--text-muted)">${d.offeredBy || 'Student'} · ${d.department || ''}</span>
+          </div>
+          <div class="skill-desc">${d.description}</div>
+          <div class="skill-meta" style="margin-bottom:1rem">
+            <span class="skill-tag">${d.category}</span>
+            ${d.price ? `<span class="skill-tag" style="background:rgba(0,194,179,0.1);color:var(--accent)">${d.price}</span>` : ''}
+          </div>
+          <div style="display:flex;gap:8px">
+            ${d.contact ? `<a href="${d.contact.includes('@') ? 'mailto:' + d.contact : 'https://wa.me/' + d.contact.replace(/\D/g,'')}" 
+                target="_blank" class="btn btn-accent btn-sm" style="flex:1;text-align:center">Contact</a>` : ''}
+            <button class="btn btn-outline btn-sm" onclick="startChat('${d.offererUid}', '${d.offeredBy}')">💬 Chat</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.filterSkills = () => renderSkills();
+    window.setSkillFilter = (f) => {
+      activeFilter = f;
+      document.querySelectorAll('.filter-chip').forEach(el => {
+        el.classList.toggle('active', el.textContent.includes(f) || (f === 'All' && el.textContent === 'All'));
+      });
+      renderSkills();
+    };
+
+    window.postSkill = async function() {
+      if (isDemo) { showToast('Configure Firebase first to post skills. See README.md', 'info'); return; }
+      const title = document.getElementById('skillTitle').value.trim();
+      const category = document.getElementById('skillCategory').value;
+      const icon = document.getElementById('skillIcon').value.trim() || '🎯';
+      const desc = document.getElementById('skillDesc').value.trim();
+      const price = document.getElementById('skillPrice').value.trim();
+      const contact = document.getElementById('skillContact').value.trim();
+
+      if (!title || !category || !desc) { showToast('Please fill required fields.', 'error'); return; }
+
+      const btn = document.getElementById('postSkillBtn');
+      btn.disabled = true; btn.textContent = 'Sharing...';
+
+      try {
+        await addDoc(collection(db, 'skills'), {
+          title, category, icon, description: desc, price, contact,
+          offererUid: currentUser.uid,
+          offeredBy: currentUser.displayName || currentUser.email.split('@')[0],
+          department: '',
+          createdAt: serverTimestamp()
+        });
+        closeSkillModal();
+        showToast('Skill shared successfully! 🧠', 'success');
+        loadSkills();
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Share Skill';
+      }
+    };
+
+    window.startChat = function(uid, name) {
+      if (uid === currentUser.uid) { showToast("That's your own skill!", 'info'); return; }
+      localStorage.setItem('chatWith', JSON.stringify({ uid, name }));
+      window.location.href = 'chat.html';
+    };
+
+    window.showToast = function(msg, type = 'info') {
+      const c = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.innerHTML = `<span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span> ${msg}`;
+      c.appendChild(t);
+      setTimeout(() => t.remove(), 3500);
+    };
+  </script>
+
+  <script>
+    window.openSkillModal = () => document.getElementById('skillModal').classList.add('active');
+    window.closeSkillModal = () => {
+      document.getElementById('skillModal').classList.remove('active');
+      ['skillTitle','skillDesc','skillPrice','skillContact','skillIcon'].forEach(id => document.getElementById(id).value = '');
+    };
+    document.getElementById('skillModal').addEventListener('click', e => {
+      if (e.target === document.getElementById('skillModal')) closeSkillModal();
+    });
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      document.querySelector('.theme-toggle').textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+      localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    }
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
+      document.querySelector('.theme-toggle').textContent = '☀️';
+    }
+  </script>
+</body>
+</html>

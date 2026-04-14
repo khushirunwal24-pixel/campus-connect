@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketplace — Campus Connect</title>
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-brand" onclick="window.location.href='../index.html'" style="cursor:pointer">
+      <div class="nav-logo">CC</div>
+      <span class="nav-brand-name">Campus Connect</span>
+    </div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="../index.html">🏠 Home</a></li>
+      <li><a href="marketplace.html" class="active">🛍️ Marketplace</a></li>
+      <li><a href="skills.html">🧠 Skills</a></li>
+      <li><a href="chat.html">💬 Chat</a></li>
+      <li><a href="profile.html">👤 Profile</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleDarkMode()">🌙</button>
+      <button class="btn btn-primary btn-sm" onclick="openPostModal()">+ Post Item</button>
+      <div class="nav-avatar" id="navAvatar" onclick="window.location.href='profile.html'">?</div>
+      <button class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('mobile-open')">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="page-content">
+    <div class="section">
+      <!-- Page Header -->
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+        <div>
+          <h1 class="section-title">🛍️ Marketplace</h1>
+          <p class="section-subtitle">Buy and sell within your campus community</p>
+        </div>
+        <button class="btn btn-primary" onclick="openPostModal()">+ Post Item</button>
+      </div>
+
+      <!-- Search & Filters -->
+      <div style="margin-bottom:1.5rem">
+        <div class="search-bar" style="max-width:100%;margin-bottom:1rem">
+          <input type="text" id="searchInput" placeholder="Search items..." oninput="filterItems()" />
+          <button onclick="filterItems()">🔍</button>
+        </div>
+        <div class="filter-bar" id="filterBar">
+          <button class="filter-chip active" onclick="setFilter('All')">All</button>
+          <button class="filter-chip" onclick="setFilter('Textbooks')">📚 Textbooks</button>
+          <button class="filter-chip" onclick="setFilter('Electronics')">💻 Electronics</button>
+          <button class="filter-chip" onclick="setFilter('Lab Equipment')">🔬 Lab Equipment</button>
+          <button class="filter-chip" onclick="setFilter('Clothing')">👕 Clothing</button>
+          <button class="filter-chip" onclick="setFilter('Notes')">📝 Notes & Papers</button>
+          <button class="filter-chip" onclick="setFilter('Sports')">⚽ Sports</button>
+          <button class="filter-chip" onclick="setFilter('Other')">📦 Other</button>
+        </div>
+      </div>
+
+      <!-- Items Grid -->
+      <div class="grid-3" id="itemsGrid">
+        <div style="grid-column:1/-1;text-align:center;padding:3rem">
+          <div class="spinner"></div>
+          <p style="color:var(--text-muted);margin-top:1rem">Loading items...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ POST ITEM MODAL ============ -->
+  <div class="modal-overlay" id="postModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">📦 Post an Item</div>
+        <button class="modal-close" onclick="closePostModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Item Title *</label>
+          <input type="text" id="itemTitle" class="form-control" placeholder="e.g., Engineering Mathematics – R.K. Jain" />
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div class="form-group">
+            <label class="form-label">Price (₹) *</label>
+            <input type="number" id="itemPrice" class="form-control" placeholder="350" min="0" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category *</label>
+            <select id="itemCategory" class="form-control">
+              <option value="">Select...</option>
+              <option>Textbooks</option>
+              <option>Electronics</option>
+              <option>Lab Equipment</option>
+              <option>Clothing</option>
+              <option>Notes</option>
+              <option>Sports</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description *</label>
+          <textarea id="itemDesc" class="form-control" rows="3" placeholder="Describe the item, its condition, etc."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Condition</label>
+          <select id="itemCondition" class="form-control">
+            <option>Like New</option>
+            <option>Good</option>
+            <option>Fair</option>
+            <option>Poor</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Image (optional)</label>
+          <div class="img-upload-zone" id="uploadZone" onclick="document.getElementById('imgInput').click()">
+            <div class="img-upload-icon">📸</div>
+            <div class="img-upload-text">Click to upload an image</div>
+            <div class="img-upload-hint">JPG, PNG, WEBP · Max 5MB</div>
+          </div>
+          <input type="file" id="imgInput" accept="image/*" hidden onchange="previewImage(this)" />
+          <img id="imgPreview" class="img-preview" style="display:none" />
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="postItem()" id="postBtn">
+          Post Item
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, getDocs, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    let currentUser = null;
+    let allItems = [];
+    let activeFilter = 'All';
+
+    // Auth guard
+    // If Firebase is not configured, show demo mode
+    const isDemo = firebaseConfig.apiKey === 'YOUR_API_KEY';
+    if (isDemo) {
+      currentUser = { uid: 'demo', displayName: 'Student', email: 'student@college.edu' };
+      document.getElementById('navAvatar').textContent = 'S';
+      loadDemoItems();
+    } else {
+      onAuthStateChanged(auth, user => {
+        if (!user) { window.location.href = 'auth.html'; return; }
+        currentUser = user;
+        const initials = (user.displayName || user.email).charAt(0).toUpperCase();
+        document.getElementById('navAvatar').textContent = initials;
+        loadItems();
+      });
+    }
+
+    // Demo data fallback
+    function loadDemoItems() {
+      allItems = [
+        { id:'d1', title:'Engineering Mathematics – R.K. Jain', category:'Textbooks', price:350, condition:'Good', description:'Very good condition. Used for 1 semester only.', sellerName:'Arjun S.', sellerUid:'u1', likedBy:[] },
+        { id:'d2', title:'Scientific Calculator – Casio FX-991EX', category:'Electronics', price:650, condition:'Like New', description:'Barely used. Works perfectly. Original box included.', sellerName:'Priya M.', sellerUid:'u2', likedBy:[] },
+        { id:'d3', title:'Data Structures Handwritten Notes', category:'Notes', price:120, condition:'Good', description:'Complete notes for DS with diagrams and examples.', sellerName:'Rahul K.', sellerUid:'u3', likedBy:[] },
+        { id:'d4', title:'Lab Coat – White (M Size)', category:'Clothing', price:180, condition:'Good', description:'Standard white lab coat. Worn only a few times.', sellerName:'Sneha R.', sellerUid:'u4', likedBy:[] },
+        { id:'d5', title:'Physics PYQ Papers 2019–2024', category:'Notes', price:80, condition:'Like New', description:'5 years of question papers with solutions.', sellerName:'Dev P.', sellerUid:'u5', likedBy:[] },
+        { id:'d6', title:'Arduino Starter Kit (Complete)', category:'Electronics', price:1200, condition:'Like New', description:'Full kit with sensors, wires, breadboard.', sellerName:'Ankit V.', sellerUid:'u6', likedBy:[] },
+      ];
+      renderItems(allItems);
+    }
+
+    // Load all items from Firestore
+    async function loadItems() {
+      const grid = document.getElementById('itemsGrid');
+      try {
+        const q = query(collection(db, 'items'), orderBy('createdAt', 'desc'));
+        const snap = await getDocs(q);
+        allItems = [];
+        snap.forEach(docSnap => allItems.push({ id: docSnap.id, ...docSnap.data() }));
+        renderItems(allItems);
+      } catch (e) {
+        grid.innerHTML = `<p style="color:var(--danger);grid-column:1/-1">⚠️ Error loading items. Check Firebase setup.</p>`;
+      }
+    }
+
+    // Render items to grid
+    function renderItems(items) {
+      const grid = document.getElementById('itemsGrid');
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = items.filter(d =>
+        (activeFilter === 'All' || d.category === activeFilter) &&
+        (d.title.toLowerCase().includes(search) || (d.description || '').toLowerCase().includes(search))
+      );
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-icon">🔍</div>
+          <div class="empty-title">No items found</div>
+          <p>Try a different search or category.</p>
+          <button class="btn btn-primary" style="margin-top:1rem" onclick="openPostModal()">Post an Item</button>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(d => `
+        <div class="item-card">
+          ${d.imageUrl ? `<img class="item-card-img" src="${d.imageUrl}" alt="${d.title}" loading="lazy"/>` :
+            `<div class="item-card-img-placeholder">${getCatEmoji(d.category)}</div>`}
+          <div class="item-card-body">
+            <div class="item-card-category">${d.category || 'General'} · ${d.condition || ''}</div>
+            <div class="item-card-title">${d.title}</div>
+            <div class="item-seller">
+              <div class="seller-avatar">${(d.sellerName || 'S').charAt(0)}</div>
+              ${d.sellerName || 'Student'}
+            </div>
+            <div class="item-card-desc">${d.description || ''}</div>
+            <div class="item-card-footer">
+              <div class="item-price">₹${Number(d.price).toLocaleString('en-IN')}</div>
+              <div style="display:flex;gap:6px">
+                <button class="item-like-btn ${(d.likedBy || []).includes(currentUser?.uid) ? 'liked' : ''}"
+                  onclick="toggleLike('${d.id}', this)">
+                  ❤️ ${(d.likedBy || []).length}
+                </button>
+                <button class="btn btn-accent btn-sm" onclick="startChat('${d.sellerUid}', '${d.sellerName}')">Chat</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Filter and search
+    window.filterItems = () => renderItems(allItems);
+    window.setFilter = (f) => {
+      activeFilter = f;
+      document.querySelectorAll('.filter-chip').forEach(el => {
+        el.classList.toggle('active', el.textContent.includes(f) || (f === 'All' && el.textContent === 'All'));
+      });
+      renderItems(allItems);
+    };
+
+    // Like / Unlike
+    window.toggleLike = async function(itemId, btn) {
+      if (!currentUser) return;
+      const itemRef = doc(db, 'items', itemId);
+      const snap = await getDoc(itemRef);
+      const likedBy = snap.data().likedBy || [];
+      const liked = likedBy.includes(currentUser.uid);
+      await updateDoc(itemRef, {
+        likedBy: liked ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid)
+      });
+      btn.classList.toggle('liked', !liked);
+      const newCount = liked ? likedBy.length - 1 : likedBy.length + 1;
+      btn.innerHTML = `❤️ ${newCount}`;
+      const item = allItems.find(i => i.id === itemId);
+      if (item) item.likedBy = liked ? likedBy.filter(u => u !== currentUser.uid) : [...likedBy, currentUser.uid];
+    };
+
+    // Chat redirect
+    window.startChat = function(sellerUid, sellerName) {
+      if (sellerUid === currentUser.uid) { showToast('That is your own listing!', 'info'); return; }
+      localStorage.setItem('chatWith', JSON.stringify({ uid: sellerUid, name: sellerName }));
+      window.location.href = 'chat.html';
+    };
+
+    // Disable real posting in demo mode
+    window.postItem = async function() {
+      if (isDemo) {
+        showToast('Configure Firebase first to post real items. See README.md', 'info');
+        return;
+      }
+      const title = document.getElementById('itemTitle').value.trim();
+      const price = document.getElementById('itemPrice').value;
+      const category = document.getElementById('itemCategory').value;
+      const desc = document.getElementById('itemDesc').value.trim();
+      const condition = document.getElementById('itemCondition').value;
+
+      if (!title || !price || !category || !desc) { showToast('Please fill all required fields.', 'error'); return; }
+
+      const btn = document.getElementById('postBtn');
+      btn.disabled = true;
+      btn.textContent = 'Posting...';
+
+      try {
+        let imageUrl = '';
+        const file = document.getElementById('imgInput').files[0];
+        if (file) {
+          // Upload image to Firebase Storage
+          const storageRef = ref(storage, `items/${currentUser.uid}/${Date.now()}_${file.name}`);
+          await uploadBytes(storageRef, file);
+          imageUrl = await getDownloadURL(storageRef);
+        }
+
+        await addDoc(collection(db, 'items'), {
+          title, price: Number(price), category, description: desc, condition, imageUrl,
+          sellerUid: currentUser.uid,
+          sellerName: currentUser.displayName || currentUser.email.split('@')[0],
+          sellerEmail: currentUser.email,
+          likedBy: [],
+          createdAt: serverTimestamp()
+        });
+
+        closePostModal();
+        showToast('Item posted successfully! 🎉', 'success');
+        loadItems();
+      } catch (e) {
+        showToast('Error posting item: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Post Item';
+      }
+    };
+
+    function getCatEmoji(cat) {
+      return { 'Textbooks': '📚', 'Electronics': '💻', 'Lab Equipment': '🔬', 'Clothing': '👕', 'Notes': '📝', 'Sports': '⚽' }[cat] || '📦';
+    }
+
+    window.showToast = function(msg, type = 'info') {
+      const c = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.innerHTML = `<span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span> ${msg}`;
+      c.appendChild(t);
+      setTimeout(() => t.remove(), 3500);
+    };
+  </script>
+
+  <script>
+    // Image preview
+    function previewImage(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const preview = document.getElementById('imgPreview');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Modal controls
+    window.openPostModal = () => document.getElementById('postModal').classList.add('active');
+    window.closePostModal = () => {
+      document.getElementById('postModal').classList.remove('active');
+      ['itemTitle','itemPrice','itemDesc'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('imgPreview').style.display = 'none';
+      document.getElementById('imgInput').value = '';
+    };
+
+    // Dark mode
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      document.querySelector('.theme-toggle').textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+      localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    }
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
+      document.querySelector('.theme-toggle').textContent = '☀️';
+    }
+
+    // Close modal on overlay click
+    document.getElementById('postModal').addEventListener('click', e => {
+      if (e.target === document.getElementById('postModal')) closePostModal();
+    });
+  </script>
+</body>
+</html>

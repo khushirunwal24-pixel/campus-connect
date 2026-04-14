@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat — Campus Connect</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .chat-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 2rem;
+    }
+    .chat-placeholder-icon { font-size: 4rem; margin-bottom: 1rem; }
+    .chat-unread {
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .msg-date-divider {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      padding: 0.5rem 0;
+      position: relative;
+    }
+    .msg-date-divider::before, .msg-date-divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 35%;
+      height: 1px;
+      background: var(--border);
+    }
+    .msg-date-divider::before { left: 0; }
+    .msg-date-divider::after { right: 0; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-brand" onclick="window.location.href='../index.html'" style="cursor:pointer">
+      <div class="nav-logo">CC</div>
+      <span class="nav-brand-name">Campus Connect</span>
+    </div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="../index.html">🏠 Home</a></li>
+      <li><a href="marketplace.html">🛍️ Marketplace</a></li>
+      <li><a href="skills.html">🧠 Skills</a></li>
+      <li><a href="chat.html" class="active">💬 Chat</a></li>
+      <li><a href="profile.html">👤 Profile</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleDarkMode()">🌙</button>
+      <div class="nav-avatar" id="navAvatar" onclick="window.location.href='profile.html'">?</div>
+      <button class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('mobile-open')">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="page-content">
+    <div class="chat-container">
+
+      <!-- Sidebar: Conversations list -->
+      <div class="chat-sidebar">
+        <div class="chat-sidebar-header">
+          💬 Messages
+        </div>
+        <div id="conversationsList">
+          <div style="padding:2rem;text-align:center">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main chat area -->
+      <div class="chat-main" id="chatMain">
+        <div class="chat-placeholder">
+          <div class="chat-placeholder-icon">💬</div>
+          <div style="font-family:var(--font-display);font-size:1.25rem;font-weight:700;color:var(--text-main);margin-bottom:.5rem">
+            Your Messages
+          </div>
+          <p>Select a conversation or start a new one from the Marketplace or Skills page.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import {
+      getFirestore,
+      collection, query, where, orderBy, onSnapshot,
+      addDoc, serverTimestamp, doc, setDoc, getDoc, getDocs, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let activeConvoId = null;
+    let msgUnsubscribe = null;
+
+    const isDemo = firebaseConfig.apiKey === 'YOUR_API_KEY';
+    if (isDemo) {
+      currentUser = { uid: 'demo', displayName: 'Student', email: 'student@college.edu' };
+      document.getElementById('navAvatar').textContent = 'S';
+      showDemoChat();
+    } else {
+      onAuthStateChanged(auth, async user => {
+        if (!user) { window.location.href = 'auth.html'; return; }
+        currentUser = user;
+        document.getElementById('navAvatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+        const chatWith = localStorage.getItem('chatWith');
+        if (chatWith) {
+          localStorage.removeItem('chatWith');
+          const { uid, name } = JSON.parse(chatWith);
+          if (uid !== currentUser.uid) {
+            const convoId = await getOrCreateConversation(uid, name);
+            openConversation(convoId, name, uid);
+          }
+        }
+        loadConversations();
+      });
+    }
+
+    function showDemoChat() {
+      const list = document.getElementById('conversationsList');
+      list.innerHTML = ['Arjun S.','Priya M.','Rahul K.'].map((name,i) => `
+        <div class="chat-user-item ${i===0?'active':''}" onclick="openDemoChat('${name}')">
+          <div class="nav-avatar">${name.charAt(0)}</div>
+          <div class="chat-user-info">
+            <div class="chat-user-name">${name}</div>
+            <div class="chat-last-msg">${['Is the book still available?','Can we meet tomorrow?','Thanks for the notes!'][i]}</div>
+          </div>
+        </div>
+      `).join('');
+      openDemoChat('Arjun S.');
+    }
+
+    window.openDemoChat = function(name) {
+      const chatMain = document.getElementById('chatMain');
+      chatMain.innerHTML = `
+        <div class="chat-header">
+          <div class="nav-avatar">${name.charAt(0)}</div>
+          <div>
+            <div style="font-weight:700;font-size:.95rem;">${name}</div>
+            <div style="font-size:.78rem;color:var(--accent);">● Online</div>
+          </div>
+        </div>
+        <div class="chat-messages" id="messagesArea">
+          <div style="display:flex;flex-direction:column;align-items:flex-start;">
+            <div class="msg-bubble msg-received">Hi! Is the calculator still available?</div>
+            <div class="msg-time">10:30 AM</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;">
+            <div class="msg-bubble msg-sent">Yes, it is! When do you want to meet?</div>
+            <div class="msg-time">10:32 AM</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-start;">
+            <div class="msg-bubble msg-received">How about tomorrow near the library?</div>
+            <div class="msg-time">10:33 AM</div>
+          </div>
+        </div>
+        <div class="chat-input-bar">
+          <input type="text" id="msgInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendDemoMsg()" />
+          <button class="btn btn-primary" onclick="sendDemoMsg()">Send ➤</button>
+        </div>
+      `;
+    };
+
+    window.sendDemoMsg = function() {
+      const input = document.getElementById('msgInput');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      const area = document.getElementById('messagesArea');
+      const bubble = document.createElement('div');
+      bubble.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;';
+      bubble.innerHTML = `<div class="msg-bubble msg-sent">${text}</div><div class="msg-time">Just now</div>`;
+      area.appendChild(bubble);
+      area.scrollTop = area.scrollHeight;
+      setTimeout(() => showToast('Firebase not configured — messages are not saved yet.', 'info'), 800);
+    };
+
+    // Get a unique conversation ID (sorted UIDs ensure uniqueness)
+    function getConvoId(uid1, uid2) {
+      return [uid1, uid2].sort().join('_');
+    }
+
+    // Get existing conversation or create a new one
+    async function getOrCreateConversation(otherUid, otherName) {
+      const convoId = getConvoId(currentUser.uid, otherUid);
+      const convoRef = doc(db, 'conversations', convoId);
+      const snap = await getDoc(convoRef);
+      if (!snap.exists()) {
+        const myName = currentUser.displayName || currentUser.email.split('@')[0];
+        await setDoc(convoRef, {
+          participants: [currentUser.uid, otherUid],
+          participantNames: { [currentUser.uid]: myName, [otherUid]: otherName },
+          lastMessage: '',
+          lastMessageAt: serverTimestamp(),
+          createdAt: serverTimestamp()
+        });
+      }
+      return convoId;
+    }
+
+    // Load all conversations involving current user (real-time listener)
+    function loadConversations() {
+      const q = query(
+        collection(db, 'conversations'),
+        where('participants', 'array-contains', currentUser.uid),
+        orderBy('lastMessageAt', 'desc')
+      );
+
+      onSnapshot(q, snap => {
+        const list = document.getElementById('conversationsList');
+        if (snap.empty) {
+          list.innerHTML = `<div style="padding:1.5rem;text-align:center;color:var(--text-muted);font-size:.875rem">
+            No conversations yet.<br>Browse the Marketplace and tap Chat on an item.
+          </div>`;
+          return;
+        }
+
+        list.innerHTML = '';
+        snap.forEach(docSnap => {
+          const d = docSnap.data();
+          const convoId = docSnap.id;
+          // Get the other person's name
+          const otherUid = d.participants.find(uid => uid !== currentUser.uid);
+          const otherName = (d.participantNames || {})[otherUid] || 'Student';
+          const initial = otherName.charAt(0).toUpperCase();
+          const isActive = convoId === activeConvoId;
+
+          const item = document.createElement('div');
+          item.className = `chat-user-item ${isActive ? 'active' : ''}`;
+          item.innerHTML = `
+            <div class="nav-avatar" style="flex-shrink:0">${initial}</div>
+            <div class="chat-user-info">
+              <div class="chat-user-name">${otherName}</div>
+              <div class="chat-last-msg">${d.lastMessage || 'Start a conversation'}</div>
+            </div>
+          `;
+          item.onclick = () => openConversation(convoId, otherName, otherUid);
+          list.appendChild(item);
+        });
+      });
+    }
+
+    // Open a conversation
+    function openConversation(convoId, otherName, otherUid) {
+      activeConvoId = convoId;
+      // Unsubscribe previous listener
+      if (msgUnsubscribe) msgUnsubscribe();
+
+      // Update sidebar active state
+      document.querySelectorAll('.chat-user-item').forEach(el => el.classList.remove('active'));
+
+      const chatMain = document.getElementById('chatMain');
+      chatMain.innerHTML = `
+        <div class="chat-header">
+          <div class="nav-avatar">${otherName.charAt(0).toUpperCase()}</div>
+          <div>
+            <div style="font-weight:700;font-size:.95rem">${otherName}</div>
+            <div style="font-size:.78rem;color:var(--accent)">● Online</div>
+          </div>
+        </div>
+        <div class="chat-messages" id="messagesArea"></div>
+        <div class="chat-input-bar">
+          <input type="text" id="msgInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg()" />
+          <button class="btn btn-primary" onclick="sendMsg()">Send ➤</button>
+        </div>
+      `;
+
+      // Real-time messages listener
+      const q = query(
+        collection(db, 'conversations', convoId, 'messages'),
+        orderBy('sentAt', 'asc')
+      );
+
+      msgUnsubscribe = onSnapshot(q, snap => {
+        const area = document.getElementById('messagesArea');
+        if (!area) return;
+        area.innerHTML = '';
+        snap.forEach(docSnap => {
+          const msg = docSnap.data();
+          const isSent = msg.senderUid === currentUser.uid;
+          const time = msg.sentAt?.toDate ? msg.sentAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+          const bubble = document.createElement('div');
+          bubble.style.display = 'flex';
+          bubble.style.flexDirection = 'column';
+          bubble.style.alignItems = isSent ? 'flex-end' : 'flex-start';
+          bubble.innerHTML = `
+            <div class="msg-bubble ${isSent ? 'msg-sent' : 'msg-received'}">${escapeHtml(msg.text)}</div>
+            <div class="msg-time">${time}</div>
+          `;
+          area.appendChild(bubble);
+        });
+        // Auto-scroll to bottom
+        area.scrollTop = area.scrollHeight;
+      });
+    }
+
+    // Send a message
+    window.sendMsg = async function() {
+      const input = document.getElementById('msgInput');
+      const text = input.value.trim();
+      if (!text || !activeConvoId) return;
+      input.value = '';
+
+      try {
+        const msgRef = collection(db, 'conversations', activeConvoId, 'messages');
+        await addDoc(msgRef, {
+          text,
+          senderUid: currentUser.uid,
+          senderName: currentUser.displayName || currentUser.email.split('@')[0],
+          sentAt: serverTimestamp()
+        });
+
+        // Update last message on conversation
+        await updateDoc(doc(db, 'conversations', activeConvoId), {
+          lastMessage: text.length > 40 ? text.slice(0, 40) + '...' : text,
+          lastMessageAt: serverTimestamp()
+        });
+      } catch (e) {
+        showToast('Failed to send message.', 'error');
+      }
+    };
+
+    function escapeHtml(text) {
+      return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    window.showToast = function(msg, type = 'info') {
+      const c = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.innerHTML = `<span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span> ${msg}`;
+      c.appendChild(t);
+      setTimeout(() => t.remove(), 3500);
+    };
+  </script>
+
+  <script>
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      document.querySelector('.theme-toggle').textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+      localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    }
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
+      document.querySelector('.theme-toggle').textContent = '☀️';
+    }
+  </script>
+</body>
+</html>
